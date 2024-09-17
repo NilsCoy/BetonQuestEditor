@@ -1,0 +1,244 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Assets/font.tres" type="DynamicFont" id=1]
+[ext_resource path="res://Scenes/GraphEdit.tscn" type="PackedScene" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Control
+
+var directory = \"res://yml/quest.yml\"
+var directorySave = \"res://save/quest.save\"
+var NpcList = []
+var PlayerList = []
+var npc_id = 0
+var player_id = 0
+
+func _on_NpcNode_pressed():
+	var node = load(\"res://Scenes/Node.tscn\")
+	var node_instance = node.instance()
+	node_instance.offset = Vector2(100,100)
+	node_instance.state = \"npc\"
+	node_instance.name = \"npc_node_\" + str(npc_id)
+	node_instance.title = \"npc_node_\" + str(npc_id)
+	node_instance.number = npc_id
+	NpcList.append(node_instance)
+	$GraphEdit.add_child(node_instance)
+	npc_id += 1
+
+func remove_node(number,state):
+	if state == \"npc\":
+		NpcList[number] = null
+	if state == \"player\":
+		PlayerList[number] = null
+	$GraphEdit.get_node(state+\"_node_\"+str(number)).queue_free()
+
+func _on_PlayerNode_pressed():
+	var node = load(\"res://Scenes/Node.tscn\")
+	var node_instance = node.instance()
+	node_instance.offset = Vector2(100,100)
+	node_instance.state = \"player\"
+	node_instance.name = \"player_node_\" + str(player_id)
+	node_instance.title = \"player_node_\" + str(player_id)
+	node_instance.number = player_id
+	PlayerList.append(node_instance)
+	$GraphEdit.add_child(node_instance)
+	player_id += 1
+
+func _on_Save_pressed():
+	$FileDialogSave.popup_centered(Vector2(600, 355))
+
+func _on_Load_pressed():
+	$FileDialogLoad.popup_centered(Vector2(600, 355))
+
+func _on_Export_pressed():
+	$FileDialogExport.popup_centered(Vector2(600, 355))
+
+func _on_GraphEdit_connection_request(from, from_slot, to, to_slot):
+	$GraphEdit.connect_node(from, from_slot, to, to_slot)
+	get_node(\"GraphEdit/\"+from).pointers.append(to)
+	get_node(\"GraphEdit/\"+from).points_combine()
+
+func _on_GraphEdit_disconnection_request(from, from_slot, to, to_slot):
+	$GraphEdit.disconnect_node(from, from_slot, to, to_slot)
+	get_node(\"GraphEdit/\"+from).pointers.remove(to)
+	get_node(\"GraphEdit/\"+from).points_combine()
+
+func save_yml():
+	var file = File.new()
+	file.open(directory, File.WRITE)
+	var text = \"NPC_options:\"
+	for i in range(len(NpcList)):
+		if NpcList[i] != null:
+			text += \"\\n  \" + NpcList[i].name + \":\" + \"\\n\" + str(get_node(\"GraphEdit/\"+NpcList[i].name).content)
+	text += \"\\n\"+\"player_options:\"
+	for i in range(len(PlayerList)):
+		if PlayerList[i] != null:
+			text += \"\\n  \" + PlayerList[i].name + \":\" + \"\\n\" + str(get_node(\"GraphEdit/\"+PlayerList[i].name).content)
+	file.store_string(text)
+	file.close()
+
+func load_yml():
+	var file = File.new()
+	file.open(directory, File.READ)
+	var content = file.get_as_text()
+	file.close()
+	return content
+
+
+func _on_FileDialogExport_file_selected(path):
+	if \".yml\" in path: directory = path
+	else: directory = path + \".yml\"
+	save_yml()
+func _on_FileDialogExport_confirmed():
+	save_yml()
+
+func _on_FileDialogSave_file_selected(path):
+	if \".save\" in path: directorySave = path
+	else: directorySave = path + \".save\"
+	Global._save(directorySave)
+func _on_FileDialogSave_confirmed():
+	Global._save(directorySave)
+
+#var _path
+func _on_FileDialogLoad_file_selected(path):
+	#_path = path
+	print(path)
+	Global._load(path)
+func _on_FileDialogLoad_confirmed():
+	#Global._load(_path)
+	pass
+
+func save():
+	var save_dict = {
+		\"filename\" : get_filename(),
+		\"parent\" : get_parent().get_path(),
+		\"NpcList\" : NpcList,
+		\"PlayerList\" : PlayerList,
+		\"npc_id\" : npc_id,
+		\"player_id\" : player_id,
+	}
+	return save_dict
+"
+
+[sub_resource type="Theme" id=3]
+default_font = ExtResource( 1 )
+
+[node name="MainScene" type="Control" groups=["save_node"]]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = SubResource( 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Panel" type="Panel" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="GraphEdit" parent="." groups=["save_node"] instance=ExtResource( 2 )]
+
+[node name="NpcNode" type="Button" parent="."]
+margin_right = 120.0
+margin_bottom = 40.0
+custom_fonts/font = ExtResource( 1 )
+text = "Npc Node +"
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="PlayerNode" type="Button" parent="."]
+margin_left = 121.0
+margin_right = 241.0
+margin_bottom = 40.0
+custom_fonts/font = ExtResource( 1 )
+text = "Player Node +"
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Save" type="Button" parent="."]
+margin_left = 440.0
+margin_right = 560.0
+margin_bottom = 40.0
+custom_fonts/font = ExtResource( 1 )
+text = "Save"
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Export" type="Button" parent="."]
+margin_left = 317.0
+margin_right = 437.0
+margin_bottom = 40.0
+custom_fonts/font = ExtResource( 1 )
+text = "Export"
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Load" type="Button" parent="."]
+margin_left = 563.0
+margin_right = 683.0
+margin_bottom = 40.0
+custom_fonts/font = ExtResource( 1 )
+text = "Load"
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="FileDialogExport" type="FileDialog" parent="."]
+margin_left = 202.0
+margin_top = 127.0
+margin_right = 802.0
+margin_bottom = 482.0
+theme = SubResource( 3 )
+window_title = "Экспорт файла"
+access = 2
+show_hidden_files = true
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="FileDialogSave" type="FileDialog" parent="."]
+margin_left = 202.0
+margin_top = 127.0
+margin_right = 802.0
+margin_bottom = 482.0
+theme = SubResource( 3 )
+window_title = "Сохранить файл"
+access = 2
+show_hidden_files = true
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="FileDialogLoad" type="FileDialog" parent="."]
+margin_left = 202.0
+margin_top = 127.0
+margin_right = 802.0
+margin_bottom = 482.0
+theme = SubResource( 3 )
+window_title = "Открыть файл"
+mode = 0
+access = 2
+show_hidden_files = true
+__meta__ = {
+"_edit_lock_": true
+}
+
+[connection signal="connection_request" from="GraphEdit" to="." method="_on_GraphEdit_connection_request"]
+[connection signal="disconnection_request" from="GraphEdit" to="." method="_on_GraphEdit_disconnection_request"]
+[connection signal="pressed" from="NpcNode" to="." method="_on_NpcNode_pressed"]
+[connection signal="pressed" from="PlayerNode" to="." method="_on_PlayerNode_pressed"]
+[connection signal="pressed" from="Save" to="." method="_on_Save_pressed"]
+[connection signal="pressed" from="Export" to="." method="_on_Export_pressed"]
+[connection signal="pressed" from="Load" to="." method="_on_Load_pressed"]
+[connection signal="confirmed" from="FileDialogExport" to="." method="_on_FileDialogExport_confirmed"]
+[connection signal="file_selected" from="FileDialogExport" to="." method="_on_FileDialogExport_file_selected"]
+[connection signal="confirmed" from="FileDialogSave" to="." method="_on_FileDialogSave_confirmed"]
+[connection signal="file_selected" from="FileDialogSave" to="." method="_on_FileDialogSave_file_selected"]
+[connection signal="confirmed" from="FileDialogLoad" to="." method="_on_FileDialogLoad_confirmed"]
+[connection signal="file_selected" from="FileDialogLoad" to="." method="_on_FileDialogLoad_file_selected"]

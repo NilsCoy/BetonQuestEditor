@@ -1,0 +1,40 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+[application]
+
+config/name="Beton Quest Diologe Editor"
+run/main_scene="res://Scenes/MainScene_new.tscn"
+config/custom_user_dir_name="NilsCoy Projects"
+boot_splash/show_image=false
+config/icon="res://icon1.png"
+config/windows_native_icon="res://icon2.ico"
+
+[autoload]
+
+Global="*res://Global.gd"
+
+[display]
+
+window/vsync/use_vsync=false
+window/stretch/mode="2d"
+window/stretch/aspect="expand"
+
+[gui]
+
+common/drop_mouse_on_gui_input_disabled=true
+
+[physics]
+
+common/enable_pause_aware_picking=true
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"
