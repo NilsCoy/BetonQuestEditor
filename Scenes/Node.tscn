@@ -1,0 +1,185 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Assets/font.tres" type="DynamicFont" id=1]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends GraphNode
+
+var state = \"\"
+export var content = \"\"
+var pointers = [] # to nodes
+var pointer = \"\" # from combine_pointers request yml
+var from = [] # from nodes
+var number = \"\"
+
+func save():
+	var save_dict = {
+		\"offset.x\" : offset.x,
+		\"offset.y\" : offset.y,
+		\"text\" : str($HBoxContainer/TextContainer/Text.text),
+		\"conditionals\" : str($HBoxContainer/TextContainer/Conditions.text),
+		\"events\" : str($HBoxContainer/TextContainer/Events.text),
+		\"content\" : content,
+		\"title\" : title,
+		\"name\" : name,
+		\"state\" : state,
+		\"pointer\" : pointer,
+		\"pointers\" : pointers,
+		\"number\" : number,
+		\"from\" : from
+	}
+	return save_dict
+
+var text = \"\"
+var conditionals = \"\"
+var events = \"\"
+#var objectives = \"\"
+
+var green = Color(0, 1, 0, 1)
+var blue = Color(0, 1, 1, 1)
+
+func _ready():
+	$HBoxContainer/TextContainer/Text.text = text
+	$HBoxContainer/TextContainer/Conditions.text = conditionals
+	$HBoxContainer/TextContainer/Events.text = events
+	#$HBoxContainer/TextContainer/Objectives.text = objectives
+	if state == \"npc\":
+		set_slot(0, true, 1, green, true, 0, blue)
+		self_modulate = Color(0.8,1.5,0.8,1)
+	elif state == \"player\":
+		set_slot(0, true, 0, blue, true, 1, green)
+		self_modulate = Color(0.8,1.5,1.3,1)
+
+func points_combine():
+	text = str($HBoxContainer/TextContainer/Text.text).c_escape() 
+	pointer = \"\"
+	for i in range(0, len(pointers)):
+		if i == (len(pointers)-1): pointer += pointers[i]
+		else: pointer += pointers[i] + \", \"
+	if pointer != \"\":
+		content = \"        text: '\"+text+\"'\\n\" + \"        condition: '\"+str($HBoxContainer/TextContainer/Conditions.text)+\"'\\n\" + \"        event: '\"+str($HBoxContainer/TextContainer/Events.text)+\"'\\n\" + \"        pointers: \"+str(pointer)+\"\\n\"
+	else: content = \"        text: '\"+text+\"'\\n\" + \"        condition: '\"+str($HBoxContainer/TextContainer/Conditions.text)+\"'\\n\" + \"        event: '\"+str($HBoxContainer/TextContainer/Events.text)+\"'\\n\"
+
+func _on_Node_close_request():
+	get_tree().get_root().get_node(\"MainScene\").remove_node(name,state)
+
+func _on_Node_resize_request(new_minsize):
+	rect_size = new_minsize
+"
+
+[node name="Node" type="GraphNode" groups=["save_node"]]
+margin_right = 300.0
+margin_bottom = 200.0
+custom_fonts/title_font = ExtResource( 1 )
+title = "Node"
+show_close = true
+resizable = true
+slot/0/left_enabled = false
+slot/0/left_type = 0
+slot/0/left_color = Color( 0, 1, 0, 1 )
+slot/0/right_enabled = false
+slot/0/right_type = 1
+slot/0/right_color = Color( 1, 0, 0, 1 )
+script = SubResource( 1 )
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+margin_left = 16.0
+margin_top = 24.0
+margin_right = 284.0
+margin_bottom = 194.0
+size_flags_vertical = 3
+
+[node name="TitlesContainer" type="VBoxContainer" parent="HBoxContainer"]
+margin_right = 92.0
+margin_bottom = 170.0
+
+[node name="Text" type="Label" parent="HBoxContainer/TitlesContainer"]
+margin_right = 92.0
+margin_bottom = 102.0
+rect_min_size = Vector2( 0, 40 )
+size_flags_vertical = 3
+custom_fonts/font = ExtResource( 1 )
+text = "Text:"
+align = 1
+valign = 1
+
+[node name="Conditions" type="Label" parent="HBoxContainer/TitlesContainer"]
+margin_top = 106.0
+margin_right = 92.0
+margin_bottom = 136.0
+rect_min_size = Vector2( 0, 30 )
+custom_fonts/font = ExtResource( 1 )
+text = "Conditions:"
+align = 1
+valign = 1
+
+[node name="Events" type="Label" parent="HBoxContainer/TitlesContainer"]
+margin_top = 140.0
+margin_right = 92.0
+margin_bottom = 170.0
+rect_min_size = Vector2( 0, 30 )
+custom_fonts/font = ExtResource( 1 )
+text = "Events:"
+align = 1
+valign = 1
+
+[node name="Objectives" type="Label" parent="HBoxContainer/TitlesContainer"]
+visible = false
+margin_top = 112.0
+margin_right = 99.0
+margin_bottom = 142.0
+rect_min_size = Vector2( 0, 30 )
+custom_fonts/font = ExtResource( 1 )
+text = "Objectives:"
+align = 1
+valign = 1
+
+[node name="TextContainer" type="VBoxContainer" parent="HBoxContainer"]
+margin_left = 96.0
+margin_right = 268.0
+margin_bottom = 170.0
+size_flags_horizontal = 3
+
+[node name="Text" type="TextEdit" parent="HBoxContainer/TextContainer"]
+margin_right = 172.0
+margin_bottom = 100.0
+rect_min_size = Vector2( 0, 40 )
+rect_pivot_offset = Vector2( -122, -53 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_fonts/font = ExtResource( 1 )
+wrap_enabled = true
+
+[node name="Conditions" type="LineEdit" parent="HBoxContainer/TextContainer"]
+margin_top = 104.0
+margin_right = 172.0
+margin_bottom = 135.0
+rect_min_size = Vector2( 0, 30 )
+rect_pivot_offset = Vector2( -122, -53 )
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 1 )
+placeholder_text = "-"
+
+[node name="Events" type="LineEdit" parent="HBoxContainer/TextContainer"]
+margin_top = 139.0
+margin_right = 172.0
+margin_bottom = 170.0
+rect_min_size = Vector2( 0, 30 )
+rect_pivot_offset = Vector2( -122, -53 )
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 1 )
+placeholder_text = "-"
+
+[node name="Objectives" type="LineEdit" parent="HBoxContainer/TextContainer"]
+visible = false
+margin_top = 112.0
+margin_right = 122.0
+margin_bottom = 142.0
+rect_min_size = Vector2( 0, 30 )
+rect_pivot_offset = Vector2( -122, -53 )
+size_flags_horizontal = 3
+custom_fonts/font = ExtResource( 1 )
+placeholder_text = "-"
+
+[connection signal="close_request" from="." to="." method="_on_Node_close_request"]
+[connection signal="resize_request" from="." to="." method="_on_Node_resize_request"]
